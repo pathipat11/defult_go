@@ -24,7 +24,7 @@ func Init() {
 }
 
 func app() {
-	viper.SetDefault("APP_PORT", "8082")
+	viper.SetDefault("APP_PORT", "8080")
 	viper.SetDefault("APP_ENV", "development")
 
 	conf("TOKEN_SECRET_USER", "kkrg0d")
