@@ -36,8 +36,6 @@ func command() error {
 	return cmda.Execute()
 
 }
-
-// Command for starting the HTTP server
 // Command for starting the HTTP server
 func httpCmd() *cobra.Command {
 	return &cobra.Command{
