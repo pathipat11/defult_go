@@ -8,6 +8,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/go-pg/pg/v10"
 )
@@ -88,20 +90,35 @@ func (s *Service) List(ctx context.Context, limit, page int, search string) (*re
 	// Calculate the offset for pagination
 	offset := (page - 1) * limit
 
-	// Define a slice to hold the database results
-	var Users []model.User
-
-	// Build the query
+	// Build the query with optional search and sorting
 	query := s.db.NewSelect().
-		Model(&Users).
+		Model((*model.User)(nil)).
+		ColumnExpr("id, username, firstname, lastname, nickname, email, role_id, CASE status " +
+			"WHEN 1 THEN 'Active' " +
+			"WHEN 2 THEN 'Inactive' " +
+			"WHEN 3 THEN 'Out' " +
+			"ELSE 'Unknown' END AS status").
 		Order("id ASC")
 
 	// Apply search filter if search string is provided
 	if search != "" {
-		query.Where("firstname ILIKE ?", "%"+search+"%")
+		searchParam := fmt.Sprintf("%%%s%%", strings.ToLower(search))
+		query.Where("LOWER(firstname) ILIKE ?", searchParam)
 	}
 
-	// Apply limit and offset if applicable
+	// Count total users for pagination (with the search filter applied)
+	totalCount, err := query.Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if totalCount == 0 {
+		return &response.UserListResponse{
+			Users:      users,
+			Pagination: response.Pagination{},
+		}, nil
+	}
+
+	// Apply limit and offset for pagination
 	if limit > 0 {
 		query.Limit(limit)
 	}
@@ -109,59 +126,22 @@ func (s *Service) List(ctx context.Context, limit, page int, search string) (*re
 		query.Offset(offset)
 	}
 
-	// Execute the query
-	err := query.Scan(ctx)
+	// Execute the query and map results to the response struct directly
+	err = query.Scan(ctx, &users)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert db results to response format
-	for _, dbUser := range Users {
-
-		var role model.Role
-		err := s.db.NewSelect().Model(&role).Where("id = ?", dbUser.RoleID).Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		user := response.UserResponse{
-			ID:        dbUser.ID,
-			Username:  dbUser.Username,
-			Firstname: dbUser.Firstname,
-			Lastname:  dbUser.Lastname,
-			RoleID: []response.RoleResponse{
-				{
-					ID:          role.ID,
-					Name:        role.Name,
-					Description: role.Description,
-				}},
-			Status: dbUser.Status.String(),
-		}
-		users = append(users, user)
-	}
-
-	// Count total users for pagination (with the search filter applied)
-	var totalCount int
-	countQuery := s.db.NewSelect().
-		Model((*model.User)(nil)).
-		ColumnExpr("COUNT(*)")
-
-	if search != "" {
-		countQuery.Where("firstname ILIKE ?", "%"+search+"%")
-	}
-
-	err = countQuery.Scan(ctx, &totalCount)
-	if err != nil {
-		return nil, err
-	}
-
-	// Calculate pagination details
+	// Calculate pagination details, ensuring no division by zero
 	perPage := limit
 	if limit <= 0 {
 		perPage = totalCount
 	}
 
-	totalPages := (totalCount + perPage - 1) / perPage
+	totalPages := 1
+	if perPage > 0 {
+		totalPages = (totalCount + perPage - 1) / perPage
+	}
 
 	pagination := response.Pagination{
 		CurrentPage: page,
@@ -177,55 +157,30 @@ func (s *Service) List(ctx context.Context, limit, page int, search string) (*re
 }
 
 func (s *Service) ListSingle(ctx context.Context, userID uint) (*response.UserListResponse, error) {
-	var users []response.UserResponse
+	var user response.UserResponse
 
-	// Define a slice to hold the database results
-	var Users []model.User
-
-	// Build the query
+	// Build the query to fetch a single user by ID
 	query := s.db.NewSelect().
-		Model(&Users).
+		Model((*model.User)(nil)).
+		ColumnExpr("id, username, firstname, lastname, nickname, email, role_id, CASE status "+
+			"WHEN 1 THEN 'Active' "+
+			"WHEN 2 THEN 'Inactive' "+
+			"WHEN 3 THEN 'Out' "+
+			"ELSE 'Unknown' END AS status").
 		Where("id = ?", userID).
 		Order("id ASC").
 		Limit(1).
-		Offset(0).
-		Scan(ctx)
+		Offset(0)
 
-	// Execute the query
-	err := query
+	// Execute the query and map the result directly to the `user` struct
+	err := query.Scan(ctx, &user)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert db results to response format
-	for _, dbUser := range Users {
-
-		var role model.Role
-		err := s.db.NewSelect().Model(&role).Where("id = ?", dbUser.RoleID).Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		user := response.UserResponse{
-			ID:        dbUser.ID,
-			Username:  dbUser.Username,
-			Firstname: dbUser.Firstname,
-			Lastname:  dbUser.Lastname,
-			Nickname:  dbUser.Nickname,
-			Email:     dbUser.Email,
-			RoleID: []response.RoleResponse{
-				{
-					ID:          role.ID,
-					Name:        role.Name,
-					Description: role.Description,
-				}},
-			Status: dbUser.Status.String(),
-		}
-		users = append(users, user)
-	}
-
+	// Return the response with the single user in a slice
 	return &response.UserListResponse{
-		Users: users,
+		Users: []response.UserResponse{user},
 	}, nil
 }
 

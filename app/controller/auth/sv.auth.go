@@ -101,18 +101,13 @@ func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) 
 
 	// Define the query and execute it using Bun
 	var user model.User
-	err = s.db.NewSelect().Model(&user).Where("id = ?", userID).Scan(ctx)
-	if err != nil {
-		logger.Infof("[error]: Failed to fetch user: %v", err)
-		return userDetail, err
-	}
-	// Fetch role details
-	var role model.Role
 	err = s.db.NewSelect().
-		Model(&role).
-		Where("id = ?", user.RoleID).
+		Model(&user).
+		Column("id", "username", "firstname", "lastname", "nickname", "email", "role_id", "points").
+		Where("id = ?", userID).
 		Scan(ctx)
 	if err != nil {
+		logger.Infof("[error]: Failed to fetch user: %v", err)
 		return userDetail, err
 	}
 
@@ -123,8 +118,7 @@ func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) 
 		Lastname:  user.Lastname,
 		Nickname:  user.Nickname,
 		Email:     user.Email,
-		RoleID:    role.ID,
-		Rolename:  role.Name,
+		RoleID:    user.RoleID,
 		Point:     user.Points,
 	}
 
