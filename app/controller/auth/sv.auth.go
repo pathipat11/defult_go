@@ -111,16 +111,16 @@ func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) 
 		return userDetail, err
 	}
 
-	userDetail = response.GetUserDetail{
-		ID:        user.ID,
-		Username:  user.Username,
-		Firstname: user.Firstname,
-		Lastname:  user.Lastname,
-		Nickname:  user.Nickname,
-		Email:     user.Email,
-		RoleID:    user.RoleID,
-		Point:     user.Points,
-	}
+	// userDetail = response.GetUserDetail{
+	// 	ID:        user.ID,
+	// 	Username:  user.Username,
+	// 	Firstname: user.Firstname,
+	// 	Lastname:  user.Lastname,
+	// 	Nickname:  user.Nickname,
+	// 	Email:     user.Email,
+	// 	RoleID:    user.RoleID,
+	// 	Point:     user.Points,
+	// }
 
 	return userDetail, nil
 }

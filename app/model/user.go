@@ -11,24 +11,24 @@ import (
 type User struct {
 	bun.BaseModel `bun:"table:users"`
 
-	ID                 uint                    `bun:",pk,autoincrement" json:"id"`
-	Username           string                  `bun:",unique,notnull" json:"username"`
-	Firstname          string                  `json:"firstname"`
-	Lastname           string                  `json:"lastname"`
-	Nickname           string                  `json:"nickname"`
-	CitizenID          string                  `bun:",unique,notnull" json:"citizen_id"`
-	Birthdate          time.Time               `json:"birthdate"`
-	Gender             enum.Gender             `bun:"column:notnull" json:"gender"`
-	Nationality        string                  `json:"nationality"`
-	RelationshipStatus enum.RelationshipStatus `bun:"column:notnull" json:"relationship_status"`
-	Address1           string                  `json:"address_1"`
-	Address2           string                  `json:"address_2"`
-	MobileNo           string                  `bun:"type:varchar(10)" json:"mobile_no"`
-	Email              string                  `bun:",unique,notnull" json:"email"`
-	RoleID             uint                    `json:"role_id"`
-	Status             enum.Status             `bun:"column:notnull" json:"status"`
-	Password           string                  `json:"password"`
-	Points             int64                   `json:"points"`
+	ID                 int64                   `bun:"id,pk,autoincrement"`
+	Username           string                  `bun:"username,unique,notnull" `
+	Firstname          string                  `bun:"firstname"`
+	Lastname           string                  `bun:"lastname"`
+	Nickname           string                  `bun:"nickname"`
+	CitizenID          string                  `bun:"citizen_id,unique,notnull"`
+	Birthdate          time.Time               `bun:"birthdate"`
+	Gender             enum.Gender             `bun:"gender,column:notnull"`
+	Nationality        string                  `bun:"nationality"`
+	RelationshipStatus enum.RelationshipStatus `bun:"relationship_status,column:notnull"`
+	Address1           string                  `bun:"address_1"`
+	Address2           string                  `bun:"address_2"`
+	MobileNo           string                  `bun:"mobile_no,type:varchar(10)"`
+	Email              string                  `bun:"email,unique,notnull"`
+	RoleID             int64                   `bun:"role_id"`
+	Status             enum.Status             `bun:"status,column:notnull"`
+	Password           string                  `bun:"password"`
+	Points             int64                   `bun:"points"`
 	CreateUpdateUnixTimestamp
 	SoftDelete
 }

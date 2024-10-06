@@ -96,55 +96,55 @@ func (ctl *Controller) ListSingle(c *gin.Context) {
 	response.Success(c, users.Users)
 }
 
-func (ctl *Controller) Update(c *gin.Context) {
-	userIDStr, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	userID := uint(userIDStr)
-	req := request.UpdateUser{}
-	if err := c.Bind(&req); err != nil {
-		logger.Infof("[%s-update]: %v", ctl.Name, err)
-		response.BadRequest(c, err.Error())
-		return
-	}
+// func (ctl *Controller) Update(c *gin.Context) {
+// 	userIDStr, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+// 	// userID := uint(userIDStr)
+// 	req := request.UpdateUser{}
+// 	if err := c.Bind(&req); err != nil {
+// 		logger.Infof("[%s-update]: %v", ctl.Name, err)
+// 		response.BadRequest(c, err.Error())
+// 		return
+// 	}
 
-	logger.Infof("Request Payload: %+v", req) // Log the request payload
+// 	logger.Infof("Request Payload: %+v", req) // Log the request payload
 
-	var birthdate time.Time
-	var err error
+// 	// var birthdate time.Time
+// 	var err error
 
-	if req.Birthdate != "" {
-		// Parse birthdate only if it's provided
-		birthdate, err = time.Parse("2006-01-02", req.Birthdate)
-		if err != nil {
-			logger.Infof("[%s-update]: %v", ctl.Name, err)
-			response.BadRequest(c, "Invalid birthdate format")
-			return
-		}
-	}
+// 	if req.Birthdate != "" {
+// 		// Parse birthdate only if it's provided
+// 		birthdate, err = time.Parse("2006-01-02", req.Birthdate)
+// 		if err != nil {
+// 			logger.Infof("[%s-update]: %v", ctl.Name, err)
+// 			response.BadRequest(c, "Invalid birthdate format")
+// 			return
+// 		}
+// 	}
 
-	user := model.User{
-		Firstname:          req.Firstname,
-		Lastname:           req.Lastname,
-		Nickname:           req.Nickname,
-		Birthdate:          birthdate,
-		Gender:             req.Gender,
-		Nationality:        req.Nationality,
-		RelationshipStatus: req.RelationshipStatus,
-		Address1:           req.Address1,
-		Address2:           req.Address2,
-		MobileNo:           req.MobileNo,
-		Email:              req.Email,
-		RoleID:             req.RoleID,
-	}
+// 	// user := model.User{
+// 	// 	Firstname:          req.Firstname,
+// 	// 	Lastname:           req.Lastname,
+// 	// 	Nickname:           req.Nickname,
+// 	// 	Birthdate:          birthdate,
+// 	// 	Gender:             req.Gender,
+// 	// 	Nationality:        req.Nationality,
+// 	// 	RelationshipStatus: req.RelationshipStatus,
+// 	// 	Address1:           req.Address1,
+// 	// 	Address2:           req.Address2,
+// 	// 	MobileNo:           req.MobileNo,
+// 	// 	Email:              req.Email,
+// 	// 	RoleID:             req.RoleID,
+// 	// }
 
-	_, err = ctl.Service.Update(c, user, userID)
-	if err != nil {
-		logger.Infof("[%s-update]: %v", ctl.Name, err)
-		response.InternalError(c, err.Error())
-		return
-	}
+// 	// _, err = ctl.Service.Update(c, user, userID)
+// 	// if err != nil {
+// 	// 	logger.Infof("[%s-update]: %v", ctl.Name, err)
+// 	// 	response.InternalError(c, err.Error())
+// 	// 	return
+// 	// }
 
-	response.Success(c, nil)
-}
+// 	response.Success(c, nil)
+// }
 
 func (ctl *Controller) SoftDelete(c *gin.Context) {
 	userIDStr, _ := strconv.ParseUint(c.Param("id"), 10, 64)
