@@ -1,32 +1,31 @@
-package user
+package role
 
 import (
 	"app/app/request"
 	"app/app/response"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (ctl *Controller) Create(c *gin.Context) {
-	var req request.CreateUser
+	var req request.CreateRole
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 
-	user, err := ctl.Service.Create(c.Request.Context(), req)
+	role, err := ctl.Service.Create(c.Request.Context(), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	response.Success(c, user)
+	response.Success(c, role)
 }
 
 func (ctl *Controller) List(c *gin.Context) {
-	limit, err := strconv.Atoi(c.DefaultQuery("limit", "0"))
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	if err != nil {
 		response.BadRequest(c, "limit is invalid")
 		return
@@ -36,17 +35,13 @@ func (ctl *Controller) List(c *gin.Context) {
 		response.BadRequest(c, "page is invalid")
 		return
 	}
-	search := c.DefaultQuery("search", "")
-	roleID := c.DefaultQuery("role_id", "")
-	status := c.DefaultQuery("status", "")
-	plan_type := c.DefaultQuery("plan_type", "")
-	users, paginate, err := ctl.Service.List(c.Request.Context(), limit, page, search, roleID, status, plan_type)
+	roles, paginate, err := ctl.Service.List(c.Request.Context(), limit, page)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	response.SuccessWithPaginate(c, users, paginate)
+	response.SuccessWithPaginate(c, roles, *paginate)
 }
 
 func (ctl *Controller) Get(c *gin.Context) {
@@ -56,34 +51,34 @@ func (ctl *Controller) Get(c *gin.Context) {
 		return
 	}
 
-	user, err := ctl.Service.Get(c.Request.Context(), id)
+	role, err := ctl.Service.Get(c.Request.Context(), id)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	response.Success(c, user)
+	response.Success(c, role)
 }
 
 func (ctl *Controller) Update(c *gin.Context) {
-	id := c.Param("id")
-	if id == "" {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
 		response.BadRequest(c, "id is required")
 		return
 	}
-	var req request.UpdateUser
+	var req request.UpdateRole
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 
-	_, err := ctl.Service.Update(c.Request.Context(), req, id)
+	role, err := ctl.Service.Update(c.Request.Context(), req, id)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	response.Success(c, nil)
+	response.Success(c, role)
 }
 
 func (ctl *Controller) Delete(c *gin.Context) {
@@ -99,6 +94,5 @@ func (ctl *Controller) Delete(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, nil)
+	response.Success(c, "Role deleted successfully")
 }
-

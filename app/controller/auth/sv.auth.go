@@ -14,23 +14,26 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *Service) GenerateToken(ctx context.Context, authType string, user *model.User) (string, error) {
+func (s *Service) GenerateToken(ctx context.Context, authType string, user *model.User, isadmin bool) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"auth_type": authType,
 		"id":        user.ID,
 		"data": map[string]interface{}{
-			"id":        user.ID,
-			"username":  user.Username,
-			"firstname": user.Firstname,
-			"lastname":  user.Lastname,
-			"nickname":  user.Nickname,
-			"status":    user.Status,
+			"id":       user.ID,
+			"username": user.Username,
+			"status":   user.Status,
 		},
 		"nbf": time.Now().Unix(),
 		"exp": time.Now().Add(7 * viper.GetDuration("TOKEN_DURATION_USER")).Unix(),
 	})
 
-	secret := []byte(viper.GetString("TOKEN_SECRET_USER"))
+	var secret []byte
+
+	if !isadmin {
+		secret = []byte(viper.GetString("TOKEN_SECRET_USER"))
+	} else {
+		secret = []byte(viper.GetString("TOKEN_SECRET_ADMIN"))
+	}
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		logger.Infof("[error]: %v", err)
@@ -43,6 +46,29 @@ func (s *Service) Login(ctx context.Context, req model.User) (*model.User, error
 	storedUser, err := s.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, errors.New("user not found")
+	}
+
+	// Log the stored hashed password and the incoming plain text password
+	log.Printf("Stored password hash: %s", storedUser.Password)
+	log.Printf("Incoming password: %s", req.Password)
+
+	// Check if the provided password matches the stored password
+	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(req.Password)); err != nil {
+		return nil, errors.New("invalid username or password")
+	}
+
+	return storedUser, nil
+}
+
+func (s *Service) LoginAdmin(ctx context.Context, req model.User) (*model.User, error) {
+	storedUser, err := s.GetUserByUsername(ctx, req.Username)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Check if the user is an admin
+	if storedUser.RoleID != 2 {
+		return nil, errors.New("user is not an admin")
 	}
 
 	// Log the stored hashed password and the incoming plain text password
@@ -103,24 +129,13 @@ func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) 
 	var user model.User
 	err = s.db.NewSelect().
 		Model(&user).
-		Column("id", "username", "firstname", "lastname", "nickname", "email", "role_id", "points").
+		Column("id", "username", "email", "first_name", "last_name", "display_name", "role_id", "status").
 		Where("id = ?", userID).
 		Scan(ctx)
 	if err != nil {
 		logger.Infof("[error]: Failed to fetch user: %v", err)
 		return userDetail, err
 	}
-
-	// userDetail = response.GetUserDetail{
-	// 	ID:        user.ID,
-	// 	Username:  user.Username,
-	// 	Firstname: user.Firstname,
-	// 	Lastname:  user.Lastname,
-	// 	Nickname:  user.Nickname,
-	// 	Email:     user.Email,
-	// 	RoleID:    user.RoleID,
-	// 	Point:     user.Points,
-	// }
 
 	return userDetail, nil
 }

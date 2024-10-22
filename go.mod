@@ -26,6 +26,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect
 	github.com/vmihailenco/tagparser v0.1.2 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )
 

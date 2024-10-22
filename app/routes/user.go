@@ -13,11 +13,9 @@ func User(router *gin.RouterGroup) {
 	md := middleware.AuthMiddleware()
 	user := router.Group("")
 	{
-
 		user.GET("/list", md, ctl.UserCtl.List)
-		user.GET("/list/:id", md, ctl.UserCtl.ListSingle)
-		// user.PATCH("/edit/:id", md, ctl.UserCtl.Update)
-		user.DELETE("/delete/:id", md, ctl.UserCtl.SoftDelete)
-		// user.DELETE("/delete-permanent/:id", md, ctl.UserCtl.Delete)
+		user.GET("/:id", md, ctl.UserCtl.Get)
+		user.PATCH("/:id", md, ctl.UserCtl.Update)
+		user.DELETE("/:id", md, ctl.UserCtl.Delete)
 	}
 }

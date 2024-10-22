@@ -34,7 +34,39 @@ func (ctl *Controller) Login(c *gin.Context) {
 	}
 
 	// Generate a token for the logged-in user
-	token, err := ctl.Service.GenerateToken(ctx, loggedInUser.Username, loggedInUser)
+	token, err := ctl.Service.GenerateToken(ctx, loggedInUser.Username, loggedInUser,false)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	response.Success(c, token)
+}
+
+func (ctl *Controller) LoginAdmin(c *gin.Context) {
+	var loginUser request.LoginUser
+	if err := c.ShouldBindJSON(&loginUser); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Create a context
+	ctx := context.Background()
+
+	// Convert loginUser to model.User
+	user := model.User{
+		Username: loginUser.Username,
+		Password: loginUser.Password,
+	}
+
+	loggedInUser, err := ctl.Service.LoginAdmin(ctx, user)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	// Generate a token for the logged-in user
+	token, err := ctl.Service.GenerateToken(ctx, loggedInUser.Username, loggedInUser,true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return

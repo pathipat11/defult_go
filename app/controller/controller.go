@@ -2,6 +2,7 @@ package controller
 
 import (
 	"app/app/controller/auth"
+	"app/app/controller/role"
 
 	"app/app/controller/user"
 	"app/config"
@@ -10,6 +11,7 @@ import (
 type Controller struct {
 	AuthCtl *auth.Controller
 	UserCtl *user.Controller
+	RoleCtl *role.Controller
 
 	// Other controllers...
 }
@@ -22,6 +24,7 @@ func New() *Controller {
 
 		AuthCtl: auth.NewController(db),
 		UserCtl: user.NewController(db),
+		RoleCtl: role.NewController(db),
 		// Other controllers...
 	}
 }

@@ -27,6 +27,6 @@ func app() {
 	viper.SetDefault("APP_PORT", "8080")
 	viper.SetDefault("APP_ENV", "development")
 
-	conf("TOKEN_SECRET_USER", "kkrg0d")
+	conf("TOKEN_SECRET_USER", "secret")
 	conf("TOKEN_DURATION_USER", 24*time.Hour)
 }
