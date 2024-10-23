@@ -44,6 +44,14 @@ func Init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println("Logger initialized")
 }
+func (log *Logger) Info(v ...interface{}) {
+	log.WithOptions(zap.AddCallerSkip(1)).output(LogInfoLevel, fmt.Sprint(v...))
+}
+
+// Info LogInfo by log.Print
+func Info(v ...interface{}) {
+	logVal.WithOptions(zap.AddCallerSkip(1)).Info(v...)
+}
 
 // Err LogErr by log.Print
 func Err(v ...interface{}) {

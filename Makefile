@@ -12,3 +12,6 @@ migrate-seed:
 
 migrate-refresh:
 	go run . migrate refresh
+
+cmd-hello:
+	go run . cmd hello
