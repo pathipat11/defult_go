@@ -15,6 +15,7 @@ const (
 type UserPayload struct {
 	UserID uuid.UUID `json:"user_id"`
 }
+type SigningMethodHMAC = jwt.SigningMethodHMAC
 
 // VerifyToken verifies the JWT token and returns the claims as a map or an error
 func VerifyToken(raw string) (map[string]any, error) {
@@ -44,4 +45,18 @@ func VerifyToken(raw string) (map[string]any, error) {
 
 	// Return a generic invalid token error if the token is not valid
 	return nil, errors.New("invalid token")
+}
+
+func CreateToken(claims jwt.MapClaims, secretKey string) (string, error) {
+	// Create a new token object
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Generate encoded token and send it as response
+	secret := []byte(secretKey)
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

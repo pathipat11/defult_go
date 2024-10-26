@@ -19,6 +19,7 @@ func Init() {
 
 	Database()
 	app()
+	OAuth()
 	// Set up Viper to automatically use environment variables
 	viper.AutomaticEnv()
 }

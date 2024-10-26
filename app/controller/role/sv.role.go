@@ -103,7 +103,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if exists {
 		return errors.New("this role has been used by user")
 	}

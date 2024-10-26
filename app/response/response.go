@@ -40,6 +40,13 @@ func Success(ctx *gin.Context, data any) {
 // InternalError ส่งผลลัพธ์เมื่อมีข้อผิดพลาดภายใน
 func InternalError(ctx *gin.Context, message any, payloadCode ...string) {
 	ctx.JSON(http.StatusInternalServerError, StatusResponse{
+		Code:    500,
+		Message: message.(string), // Set the message directly here
+	})
+}
+
+func NotFound(ctx *gin.Context, message any, payloadCode ...string) {
+	ctx.JSON(http.StatusNotFound, StatusResponse{
 		Code:    404,
 		Message: message.(string), // Set the message directly here
 	})

@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"math"
-	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -103,11 +102,8 @@ func (s *Service) List(ctx context.Context, limit, page int, search string, role
 }
 
 func (s *Service) Get(ctx context.Context, id string) (*model.User, error) {
-	idInt, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	user := model.User{ID: idInt}
+
+	user := model.User{ID: id}
 	if err := s.db.NewSelect().Model(&user).WherePK().Scan(ctx); err != nil {
 		return nil, err
 	}
@@ -142,11 +138,8 @@ func (s *Service) Update(ctx context.Context, req request.UpdateUser, id string)
 }
 
 func (s *Service) Delete(ctx context.Context, id string) error {
-	idInt, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return err
-	}
-	user := model.User{ID: idInt}
+
+	user := model.User{ID: id}
 	if _, err := s.db.NewDelete().Model(&user).WherePK().Exec(ctx); err != nil {
 		return err
 	}
