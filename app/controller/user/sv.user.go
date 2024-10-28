@@ -4,10 +4,8 @@ import (
 	"app/app/enum"
 	"app/app/model"
 	"app/app/request"
-	"app/app/response"
 	"context"
 	"errors"
-	"math"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -56,8 +54,13 @@ func (s *Service) Create(ctx context.Context, req request.CreateUser) (*model.Us
 	return user, nil
 }
 
-func (s *Service) List(ctx context.Context, limit, page int, search string, roleID string, status string, planType string) ([]model.User, response.Pagination, error) {
-	Offset := (page - 1) * limit
+func (s *Service) List(ctx context.Context, limit, page int, search string, roleID string, status string, planType string) ([]model.User, int, error) {
+	var offset int
+	if page > 1 {
+		offset = (page - 1) * limit
+	} else {
+		offset = 0
+	}
 	users := []model.User{}
 	query := s.db.NewSelect().Model(&users)
 	if search != "" {
@@ -69,36 +72,18 @@ func (s *Service) List(ctx context.Context, limit, page int, search string, role
 	if status != "" {
 		query.Where("status = ?", status)
 	}
-	// if planType != "" {
-	// 	query.Where("plan_type = ?", planType)
-	// }
-	if limit == 0 {
-		limit = 10
-	}
-	if page == 0 {
-		page = 1
-	}
-	query.Limit(limit).Offset(Offset).
+	query.Limit(limit).Offset(offset).
 		Order("created_at ASC")
 	if err := query.Scan(ctx); err != nil {
-		return nil, response.Pagination{}, err
+		return nil, 0, err
 	}
 
 	total, err := s.db.NewSelect().Model(&model.User{}).Count(ctx)
 	if err != nil {
-		return nil, response.Pagination{}, err
+		return nil, 0, err
 	}
 
-	totalPages := int(math.Ceil(float64(total) / float64(limit)))
-
-	paginate := response.Pagination{
-		CurrentPage: page,
-		PerPage:     limit,
-		TotalPages:  totalPages,
-		Total:       total,
-	}
-
-	return users, paginate, nil
+	return users, total, nil
 }
 
 func (s *Service) Get(ctx context.Context, id string) (*model.User, error) {

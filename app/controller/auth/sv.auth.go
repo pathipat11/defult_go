@@ -3,7 +3,6 @@ package auth
 import (
 	"app/app/enum"
 	"app/app/model"
-	"app/app/response"
 	"app/app/util/jwt"
 	"app/internal/logger"
 	"context"
@@ -120,9 +119,7 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 	return &m, nil
 }
 
-func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) (response.GetUserDetail, error) {
-	var userDetail response.GetUserDetail
-
+func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) (*model.User, error) {
 	// Parse the JWT token
 	token, err := jwtlib.Parse(tokenString, func(token *jwtlib.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -131,39 +128,39 @@ func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) 
 		return []byte(viper.GetString("TOKEN_SECRET_USER")), nil
 	})
 	if err != nil {
-		return userDetail, err
+		return nil, err
 	}
 
 	// Extract user ID from token claims
 	claims, ok := token.Claims.(jwtlib.MapClaims)
 	if !ok || !token.Valid {
-		return userDetail, errors.New("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
-	data, ok := claims["data"].(map[string]interface{})
+	// data, ok := claims["data"].(map[string]interface{})
+	// if !ok {
+	// 	return userDetail, errors.New("invalid token payload: data field is missing")
+	// }
+
+	userID, ok := claims["id"]
 	if !ok {
-		return userDetail, errors.New("invalid token payload: data field is missing")
+		return nil, errors.New("invalid token payload: id field is missing or not a number")
 	}
 
-	userIDFloat, ok := data["id"].(float64)
-	if !ok {
-		return userDetail, errors.New("invalid token payload: id field is missing or not a number")
-	}
-	userID := int(userIDFloat)
+	logger.Infof("User ID: %v", userID)
 
 	// Define the query and execute it using Bun
 	var user model.User
 	err = s.db.NewSelect().
 		Model(&user).
-		Column("id", "username", "email", "first_name", "last_name", "display_name", "role_id", "status").
 		Where("id = ?", userID).
 		Scan(ctx)
 	if err != nil {
 		logger.Infof("[error]: Failed to fetch user: %v", err)
-		return userDetail, err
+		return nil, err
 	}
 
-	return userDetail, nil
+	return &user, nil
 }
 
 func (s *Service) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {

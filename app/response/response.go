@@ -74,7 +74,22 @@ type Pagination struct {
 	Total       int `json:"total"`
 }
 
-func SuccessWithPaginate(ctx *gin.Context, data any, pagination Pagination) {
+func SuccessWithPaginate(ctx *gin.Context, data any, limit, page, count int) {
+	// Calculate pagination details
+	totalPages := 1
+	perPage := count
+	if limit > 0 {
+		totalPages = (count + limit - 1) / limit
+		perPage = limit
+	}
+
+	pagination := Pagination{
+		CurrentPage: page,
+		PerPage:     perPage,
+		TotalPages:  totalPages,
+		Total:       count,
+	}
+
 	if pagination.Total == 0 {
 		ctx.JSON(http.StatusOK, ResponsePaginate0{
 			Status: StatusResponse{

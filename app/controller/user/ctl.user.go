@@ -26,27 +26,20 @@ func (ctl *Controller) Create(c *gin.Context) {
 }
 
 func (ctl *Controller) List(c *gin.Context) {
-	limit, err := strconv.Atoi(c.DefaultQuery("limit", "0"))
-	if err != nil {
-		response.BadRequest(c, "limit is invalid")
-		return
-	}
-	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if err != nil {
-		response.BadRequest(c, "page is invalid")
-		return
-	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "0"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+
 	search := c.DefaultQuery("search", "")
 	roleID := c.DefaultQuery("role_id", "")
 	status := c.DefaultQuery("status", "")
 	plan_type := c.DefaultQuery("plan_type", "")
-	users, paginate, err := ctl.Service.List(c.Request.Context(), limit, page, search, roleID, status, plan_type)
+	users, count, err := ctl.Service.List(c.Request.Context(), limit, page, search, roleID, status, plan_type)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	response.SuccessWithPaginate(c, users, paginate)
+	response.SuccessWithPaginate(c, users, limit, page, count)
 }
 
 func (ctl *Controller) Get(c *gin.Context) {
@@ -101,4 +94,3 @@ func (ctl *Controller) Delete(c *gin.Context) {
 
 	response.Success(c, nil)
 }
-

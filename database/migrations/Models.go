@@ -14,10 +14,10 @@ func Models() []any {
 		// (*model.Role)(nil),
 		// (*model.Setting)(nil),
 		// (*model.SprintPlan)(nil),
-		// (*model.SprintTask)(nil),
+		(*model.SprintTask)(nil),
 		// (*model.Subscription)(nil),
-		(*model.TeamMember)(nil),
-		(*model.Team)(nil),
+		// (*model.TeamMember)(nil),
+		// (*model.Team)(nil),
 		// (*model.Transaction)(nil),
 		// (*model.User)(nil),
 	}

@@ -3,9 +3,10 @@ package auth
 import (
 	"app/app/enum"
 	"app/app/model"
+	provider "app/app/provider/OAuth"
 	"app/app/request"
 	"app/app/response"
-	"app/config"
+	"app/internal/logger"
 	"context"
 	"encoding/json"
 
@@ -93,22 +94,32 @@ func (ctl *Controller) GetUserDetailByToken(c *gin.Context) {
 	response.Success(c, userDetail)
 }
 
-var oauthStateString = "state"
-
 func (ctl *Controller) LoginGoogle(c *gin.Context) {
-	googleOauthConfig := config.GetGoogleOAuthConfig()
-	url := googleOauthConfig.AuthCodeURL(oauthStateString)
+	// รับค่า redirect_url จาก query parameter
+	redirect := c.Query("redirect_url")
+	if redirect == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Redirect URL is required"})
+		return
+	}
+
+	// เก็บ redirect_url ไว้ใน cookie เพื่อใช้งานในขั้นตอน callback
+	c.SetCookie("redirect_url", redirect, 3600, "/", "localhost", false, true)
+
+	googleOauthConfig := provider.GetGoogleOAuthConfig()
+	url := googleOauthConfig.AuthCodeURL("state")
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
 func (ctl *Controller) GoogleCallback(c *gin.Context) {
-	if c.Query("state") != oauthStateString {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "State is not valid"})
+	// ดึงค่า redirect_url จาก cookie
+	redirect, err := c.Cookie("redirect_url")
+	if err != nil || redirect == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Redirect URL is required"})
 		return
 	}
 
 	code := c.Query("code")
-	googleOauthConfig := config.GetGoogleOAuthConfig()
+	googleOauthConfig := provider.GetGoogleOAuthConfig()
 	token, err := googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Code exchange failed"})
@@ -123,7 +134,6 @@ func (ctl *Controller) GoogleCallback(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	// Parse the user info from the response
 	userInfo := make(map[string]interface{})
 	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user info"})
@@ -137,32 +147,60 @@ func (ctl *Controller) GoogleCallback(c *gin.Context) {
 		Status:      enum.STATUS_ACTIVE,
 	}
 
-	// Check if the user already exists
+	// ตรวจสอบว่าผู้ใช้มีอยู่ในระบบหรือไม่
 	ex, err := ctl.Service.GetUserByEmail(c.Request.Context(), user.Email)
 
-	// If the user does not exist, create a new user
+	// ถ้าผู้ใช้ยังไม่มีในระบบ ให้สร้างผู้ใช้ใหม่
 	if err != nil {
 		user, err := ctl.Service.Create(c.Request.Context(), user)
 		if err != nil {
 			response.InternalError(c, err.Error())
 			return
 		}
-		// Generate JWT token
+		// สร้าง JWT token
 		jwtToken, err := ctl.Service.GenerateTokenGoogle(user.ID, userInfo)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT"})
 			return
 		}
-		response.Success(c, jwtToken)
+		// ตั้งค่า JWT token เป็น cookie
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "auth_token",
+			Value:    jwtToken,
+			MaxAge:   3600,
+			Path:     "/",
+			Domain:   "",
+			Secure:   false, // ใช้ false ในการพัฒนา และเปลี่ยนเป็น true ใน production
+			HttpOnly: false,
+			SameSite: http.SameSiteLaxMode, // เปลี่ยนเป็น Lax ในระหว่างการพัฒนา
+		})
+		logger.Infof("token : %s", jwtToken)
+		// Redirect ไปยัง URL ที่ได้รับจาก cookie
+		c.Redirect(http.StatusTemporaryRedirect, redirect)
+		return
 	}
 
-	// Generate JWT token
+	// สร้าง JWT token
 	jwtToken, err := ctl.Service.GenerateTokenGoogle(ex.ID, userInfo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT"})
 		return
 	}
 
-	// Return the JWT token as the response
-	response.Success(c, jwtToken)
+	// ตั้งค่า JWT token เป็น cookie
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "auth_token",
+		Value:    jwtToken,
+		MaxAge:   3600,
+		Path:     "/",
+		Domain:   "",
+		Secure:   false, // ใช้ false ในการพัฒนา และเปลี่ยนเป็น true ใน production
+		HttpOnly: false,
+		SameSite: http.SameSiteLaxMode, // เปลี่ยนเป็น Lax ในระหว่างการพัฒนา
+	})
+
+	logger.Infof("token : %s", jwtToken)
+
+	// Redirect ไปยัง URL ที่ได้รับจาก cookie
+	c.Redirect(http.StatusTemporaryRedirect, redirect)
 }
