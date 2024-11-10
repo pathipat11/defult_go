@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -10,12 +9,7 @@ import (
 
 func Init() {
 	// Load .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Printf("Error loading .env file: %v", err)
-	} else {
-		log.Println(".env file loaded successfully")
-	}
+	godotenv.Load()
 
 	Database()
 	app()
