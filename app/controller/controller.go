@@ -15,9 +15,7 @@ type Controller struct {
 }
 
 func New() *Controller {
-	// Fetch the initialized DB connection
 	db := config.GetDB()
-	// db2 := config.GetDB2()
 	return &Controller{
 
 		AuthCtl: auth.NewController(db),

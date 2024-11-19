@@ -15,9 +15,6 @@ func Auth(router *gin.RouterGroup) {
 	{
 
 		auth.POST("/login", ctl.AuthCtl.Login)
-		auth.GET("/google/login", ctl.AuthCtl.LoginGoogle)
-		auth.GET("/callback-google", ctl.AuthCtl.GoogleCallback)
-		auth.POST("/admin/login", ctl.AuthCtl.LoginAdmin)
 		auth.POST("/register", ctl.UserCtl.Create)
 		auth.GET("/user/detail", md, ctl.AuthCtl.GetUserDetailByToken)
 	}

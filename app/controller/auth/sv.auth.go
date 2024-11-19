@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"app/app/enum"
 	"app/app/model"
 	"app/app/util/jwt"
 	"app/internal/logger"
@@ -43,54 +42,10 @@ func (s *Service) GenerateToken(ctx context.Context, authType string, user *mode
 	return tokenString, nil
 }
 
-func (s *Service) GenerateTokenGoogle(id string, userInfo map[string]interface{}) (string, error) {
-	claims := jwtlib.MapClaims{
-		"auth_type": "google",
-		"id":        id,
-		"data": map[string]interface{}{
-			"id":    userInfo["id"],
-			"name":  userInfo["name"],
-			"email": userInfo["email"],
-		},
-		"nbf": time.Now().Unix(),
-		"exp": time.Now().Add(7 * viper.GetDuration("TOKEN_DURATION_USER")).Unix(),
-	}
-
-	tokenString, err := jwt.CreateToken(claims, viper.GetString("TOKEN_SECRET_USER"))
-	if err != nil {
-		logger.Infof("[error]: %v", err)
-		return "", err
-	}
-	return tokenString, nil
-}
-
 func (s *Service) Login(ctx context.Context, req model.User) (*model.User, error) {
 	storedUser, err := s.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, errors.New("user not found")
-	}
-
-	// Log the stored hashed password and the incoming plain text password
-	log.Printf("Stored password hash: %s", storedUser.Password)
-	log.Printf("Incoming password: %s", req.Password)
-
-	// Check if the provided password matches the stored password
-	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(req.Password)); err != nil {
-		return nil, errors.New("invalid username or password")
-	}
-
-	return storedUser, nil
-}
-
-func (s *Service) LoginAdmin(ctx context.Context, req model.User) (*model.User, error) {
-	storedUser, err := s.GetUserByUsername(ctx, req.Username)
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
-
-	// Check if the user is an admin
-	if storedUser.RoleID != 2 {
-		return nil, errors.New("user is not an admin")
 	}
 
 	// Log the stored hashed password and the incoming plain text password
@@ -169,25 +124,5 @@ func (s *Service) GetUserByEmail(ctx context.Context, email string) (*model.User
 		Where("email = ?", email).Scan(ctx); err != nil {
 		return nil, err
 	}
-	return &m, nil
-}
-
-func (s *Service) Create(ctx context.Context, user model.User) (*model.User, error) {
-	m := model.User{
-		Username:    user.Username,
-		Email:       user.Email,
-		Password:    user.Password,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		DisplayName: user.DisplayName,
-		RoleID:      1,
-		Status:      enum.STATUS_ACTIVE,
-	}
-
-	// insert user
-	if _, err := s.db.NewInsert().Model(&m).Exec(ctx); err != nil {
-		return nil, err
-	}
-
 	return &m, nil
 }
