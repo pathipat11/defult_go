@@ -6,7 +6,6 @@ import (
 	"app/internal/logger"
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	jwtlib "github.com/golang-jwt/jwt/v5"
@@ -47,10 +46,6 @@ func (s *Service) Login(ctx context.Context, req model.User) (*model.User, error
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
-
-	// Log the stored hashed password and the incoming plain text password
-	log.Printf("Stored password hash: %s", storedUser.Password)
-	log.Printf("Incoming password: %s", req.Password)
 
 	// Check if the provided password matches the stored password
 	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(req.Password)); err != nil {
