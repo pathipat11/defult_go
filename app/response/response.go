@@ -111,3 +111,10 @@ func SuccessWithPaginate(ctx *gin.Context, data any, limit, page, count int) {
 		})
 	}
 }
+
+func Forbidden(ctx *gin.Context, message any, payloadCode ...string) {
+	ctx.JSON(http.StatusInternalServerError, StatusResponse{
+		Code:    403,
+		Message: message.(string), // Set the message directly here
+	})
+}

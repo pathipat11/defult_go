@@ -3,6 +3,7 @@ package config
 import (
 	pdb "app/app/provider/database"
 	"log"
+	"sync"
 
 	"github.com/uptrace/bun"
 )
@@ -23,27 +24,32 @@ func Database() {
 	)
 	log.Println("database connected success")
 
-	// Connect to database2
-	// pdb.Register(
-	// 	&db2,
-	// 	&pdb.DBOption{
-	// 		Host:     confString("DB2_HOST", "127.0.0.1"),
-	// 		Port:     confInt64("DB2_PORT", int64(5432)),
-	// 		Database: confString("DB2_DATABASE", "Database2"),
-	// 		Username: confString("DB2_USER", "postgres"),
-	// 		Password: confString("DB2_PASSWORD", ""),
-	// 		TimeZone: confString("TZ", "Asia/Bangkok"),
-	// 	},
-	// )
-	// log.Println("database2 connected success")
 }
 
 var (
-	db *bun.DB
-	// db2 *bun.DB
+	db     *bun.DB
+	dbMap  = make(map[string]*bun.DB) // Initialize the dbMap
+	dbLock sync.RWMutex
 )
 
 func GetDB() *bun.DB {
+	return db
+}
+
+func DB(name ...string) *bun.DB {
+	dbLock.RLock()
+	defer dbLock.RUnlock()
+	if dbMap == nil {
+		panic("database not initialized") // Panic if dbMap is nil
+	}
+	if len(name) == 0 {
+		return dbMap["default"] // Return the default database
+	}
+
+	db, ok := dbMap[name[0]]
+	if !ok {
+		panic("database not initialized") // Panic if the specified database is not found
+	}
 	return db
 }
 

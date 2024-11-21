@@ -86,25 +86,16 @@ func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) 
 		return nil, err
 	}
 
-	// Extract user ID from token claims
 	claims, ok := token.Claims.(jwtlib.MapClaims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token")
 	}
-
-	// data, ok := claims["data"].(map[string]interface{})
-	// if !ok {
-	// 	return userDetail, errors.New("invalid token payload: data field is missing")
-	// }
 
 	userID, ok := claims["id"]
 	if !ok {
 		return nil, errors.New("invalid token payload: id field is missing or not a number")
 	}
 
-	logger.Infof("User ID: %v", userID)
-
-	// Define the query and execute it using Bun
 	var user model.User
 	err = s.db.NewSelect().
 		Model(&user).

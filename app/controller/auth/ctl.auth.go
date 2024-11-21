@@ -4,7 +4,6 @@ import (
 	"app/app/model"
 	"app/app/request"
 	"app/app/response"
-	"context"
 
 	"net/http"
 
@@ -18,23 +17,19 @@ func (ctl *Controller) Login(c *gin.Context) {
 		return
 	}
 
-	// Create a context
-	ctx := context.Background()
-
-	// Convert loginUser to model.User
 	user := model.User{
 		Username: loginUser.Username,
 		Password: loginUser.Password,
 	}
 
-	loggedInUser, err := ctl.Service.Login(ctx, user)
+	loggedInUser, err := ctl.Service.Login(c.Request.Context(), user)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
 	// Generate a token for the logged-in user
-	token, err := ctl.Service.GenerateToken(ctx, loggedInUser.Username, loggedInUser, false)
+	token, err := ctl.Service.GenerateToken(c.Request.Context(), loggedInUser.Username, loggedInUser, false)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
