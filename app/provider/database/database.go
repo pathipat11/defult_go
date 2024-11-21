@@ -65,7 +65,6 @@ func DB() *bun.DB {
 	return db
 }
 
-// GritDB returns the database2 connection
 func DB2() *bun.DB {
 	return db2
 }
