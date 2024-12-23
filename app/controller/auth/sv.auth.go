@@ -3,12 +3,14 @@ package auth
 import (
 	"app/app/model"
 	"app/app/util/jwt"
-	"app/internal/logger"
+	"app/config"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	jwtlib "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -35,14 +37,13 @@ func (s *Service) GenerateToken(ctx context.Context, authType string, user *mode
 
 	tokenString, err := jwt.CreateToken(claims, secretKey)
 	if err != nil {
-		logger.Infof("[error]: %v", err)
 		return "", err
 	}
 	return tokenString, nil
 }
 
 func (s *Service) Login(ctx context.Context, req model.User) (*model.User, error) {
-	storedUser, err := s.GetUserByUsername(ctx, req.Username)
+	storedUser, err := s.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
@@ -60,10 +61,20 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 		return nil, errors.New("username is required")
 	}
 	m := model.User{}
-	logger.Infof("Searching for user with username: %s", username)
 	if err := s.db.NewSelect().Model(&m).
 		Where("username = ?", username).Scan(ctx); err != nil {
-		logger.Infof("[error]: %v", err)
+		return nil, err
+	}
+	return &m, nil
+}
+
+func (s *Service) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+	if id == "" {
+		return nil, errors.New("id is required")
+	}
+	m := model.User{}
+	if err := s.db.NewSelect().Model(&m).
+		Where("id = ?", id).Scan(ctx); err != nil {
 		return nil, err
 	}
 	return &m, nil
@@ -97,7 +108,6 @@ func (s *Service) GetUserDetailByToken(ctx context.Context, tokenString string) 
 		Where("id = ?", userID).
 		Scan(ctx)
 	if err != nil {
-		logger.Infof("[error]: Failed to fetch user: %v", err)
 		return nil, err
 	}
 
@@ -111,4 +121,55 @@ func (s *Service) GetUserByEmail(ctx context.Context, email string) (*model.User
 		return nil, err
 	}
 	return &m, nil
+}
+
+func (s *Service) ResetPassword(ctx context.Context, email string) error {
+	user, err := s.GetUserByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	password := uuid.New().String()
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.Password = string(hashedPassword)
+
+	if _, err := s.db.NewUpdate().Model(user).Where("email = ?", email).Exec(ctx); err != nil {
+		return err
+	}
+
+	err = config.SendEmail(email, "Reset Password", "Reset Password", fmt.Sprintf("Your password has been reset to %s", password))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) ChangePassword(ctx context.Context, userID string, oldPassword string, newPassword string) (*model.User, error) {
+	storedUser, err := s.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Check if the provided password matches the stored password
+	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(oldPassword)); err != nil {
+		return nil, errors.New("invalid old password")
+	}
+
+	// Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the user's password
+	storedUser.Password = string(hashedPassword)
+	if _, err := s.db.NewUpdate().Model(storedUser).Where("id = ?", userID).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return storedUser, nil
 }

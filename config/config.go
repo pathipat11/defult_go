@@ -24,4 +24,8 @@ func app() {
 
 	conf("TOKEN_SECRET_USER", "secret")
 	conf("TOKEN_DURATION_USER", 24*time.Hour)
+	conf("EMAIL_HOST", "")
+	conf("EMAIL_PORT", "")
+	conf("EMAIL_USERNAME", "")
+	conf("EMAIL_PASSWORD", "")
 }

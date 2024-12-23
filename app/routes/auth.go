@@ -17,6 +17,8 @@ func Auth(router *gin.RouterGroup) {
 
 		auth.POST("/login", ctl.AuthCtl.Login)
 		auth.POST("/register", ctl.UserCtl.Create)
+		auth.POST("/reset_password", ctl.AuthCtl.ResetPassword)
+		auth.POST("/change_password", ctl.AuthCtl.ChangePassword)
 		auth.GET("/user/detail", md, log, ctl.AuthCtl.GetUserDetailByToken)
 	}
 }
