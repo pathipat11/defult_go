@@ -98,10 +98,7 @@ func NewLogResponse() gin.HandlerFunc {
 			return
 		}
 
-		// Save to Activity Log
-		token := ctx.GetHeader("Authorization")
-
-		user, err := helper.GetUserByToken(ctx, token)
+		user, err := helper.GetUserByToken(ctx)
 		if err != nil {
 			response.Unauthorized(ctx, nil)
 			ctx.Abort()

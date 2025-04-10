@@ -14,6 +14,6 @@ type ActivityLog struct {
 	Query      interface{} `json:"query" bun:"type:jsonb" form:"query"`
 	IpAddress  string      `json:"ip_address" bun:",notnull,type:varchar(50)" form:"ip_address"`
 	UserAgent  string      `json:"user_agent" form:"user_agent"`
-	CreatedBy  string      `json:"created_by" bun:",type:text,notnull" form:"created_by"`
+	CreatedBy  int64       `json:"created_by" form:"created_by"`
 	CreatedAt  int64       `json:"created_at" bun:"default:EXTRACT(EPOCH FROM NOW())" form:"created_at"`
 }

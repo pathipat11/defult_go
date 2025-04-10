@@ -1,8 +1,6 @@
-package auth
+package product
 
-import (
-	"github.com/uptrace/bun"
-)
+import "github.com/uptrace/bun"
 
 type Controller struct {
 	Name    string
@@ -11,7 +9,7 @@ type Controller struct {
 
 func NewController(db *bun.DB) *Controller {
 	return &Controller{
-		Name:    `auth-ctl`,
+		Name:    `product-ctl`,
 		Service: NewService(db),
 	}
 }

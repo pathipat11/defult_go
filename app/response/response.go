@@ -53,7 +53,7 @@ func NotFound(ctx *gin.Context, message any, payloadCode ...string) {
 }
 
 // BadRequest ส่งผลลัพธ์เมื่อมีข้อผิดพลาดจากการขอข้อมูลที่ไม่ถูกต้อง
-func BadRequest(ctx *gin.Context, message any, payloadCode ...string) {
+func BadRequest(ctx *gin.Context, message any) {
 	ctx.JSON(http.StatusBadRequest, StatusResponse{
 		Code:    400,
 		Message: message.(string), // Set the message directly here
