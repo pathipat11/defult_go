@@ -1,9 +1,14 @@
 package helper
 
 import (
-	"context"
+	"github.com/gin-gonic/gin"
 )
 
-func GetUserByToken(ctx context.Context) (int64, error) {
-	return 0, nil
+func GetUserByToken(ctx *gin.Context) (any, error) {
+	claims, exist := ctx.Get("claims")
+	if !exist {
+		return 0, nil
+	}
+
+	return claims, nil
 }

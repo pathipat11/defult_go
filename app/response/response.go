@@ -68,25 +68,16 @@ func Unauthorized(ctx *gin.Context, message any, payloadCode ...string) {
 }
 
 type Pagination struct {
-	CurrentPage int `json:"current_page"`
-	PerPage     int `json:"per_page"`
-	TotalPages  int `json:"total_pages"`
+	Page        int `json:"page"`
+	Size        int `json:"size"`
 	Total       int `json:"total"`
 }
 
-func SuccessWithPaginate(ctx *gin.Context, data any, limit, page, count int) {
-	// Calculate pagination details
-	totalPages := 1
-	perPage := count
-	if limit > 0 {
-		totalPages = (count + limit - 1) / limit
-		perPage = limit
-	}
+func SuccessWithPaginate(ctx *gin.Context, data any, size, page, count int) {
 
 	pagination := Pagination{
-		CurrentPage: page,
-		PerPage:     perPage,
-		TotalPages:  totalPages,
+		Page:        page,
+		Size:        size,
 		Total:       count,
 	}
 

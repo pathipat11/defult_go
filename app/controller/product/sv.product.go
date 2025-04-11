@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"app/app/model" // Ensure to import the model package
+	"app/app/model"
 	"app/app/request"
 )
 
@@ -32,7 +32,7 @@ func (s *Service) Update(ctx context.Context, id int64, req request.ProductUpdat
 	}
 
 	if !ex {
-		return nil, true, errors.New("message")
+		return nil, true, errors.New("product not found")
 	}
 
 	m := model.Product{
@@ -64,7 +64,7 @@ func (s *Service) Delete(ctx context.Context, id int64) (*model.Product, bool, e
 	}
 
 	if !ex {
-		return nil, true, errors.New("message")
+		return nil, true, errors.New("product not found")
 	}
 
 	_, err = s.db.NewDelete().Model((*model.Product)(nil)).Where("id = ?", id).Exec(ctx)
