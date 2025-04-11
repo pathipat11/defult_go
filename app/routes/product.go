@@ -14,6 +14,7 @@ func Product(router *gin.RouterGroup) {
 	log := middleware.NewLogResponse()
 	product := router.Group("", log)
 	{
+		product.POST("create", ctl.ProductCtl.Create)
 		product.GET("/list", md, ctl.ProductCtl.List)
 		product.GET("/:id", md, ctl.ProductCtl.Get)
 		product.PATCH("/:id", md, ctl.ProductCtl.Update)

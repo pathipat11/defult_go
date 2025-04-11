@@ -8,7 +8,7 @@ func Models() []any {
 		// (*model.RolePermission)(nil),
 		// (*model.Role)(nil),
 		// (*model.User)(nil),
-		(*model.ActivityLog)(nil),
+		(*model.User)(nil),
 	}
 }
 
