@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"app/app/controller"
 	"app/config"
 	"app/internal/logger"
 
@@ -48,9 +49,13 @@ func Router(app *gin.Engine) {
 	// Create a new group for /api/v1
 	apiV1 := app.Group("/api/v1")
 
+	// Build the controllers once and share them across route groups.
+	ctl := controller.New()
+
 	// Define groups of routes under /api/v1
-	Product(apiV1.Group("/products"))
-	User(apiV1.Group("/users"))
+	Auth(apiV1.Group("/auth"), ctl)
+	Product(apiV1.Group("/products"), ctl)
+	User(apiV1.Group("/users"), ctl)
 }
 
 // corsMiddleware builds the CORS config from CORS_ALLOW_ORIGINS. A value of "*"

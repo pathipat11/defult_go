@@ -132,14 +132,39 @@ The `Makefile` wraps these as `make api`, `make migrate-up`, `make migrate-down`
 All feature routes are mounted under `/api/v1` (see `app/routes/routes.go`).
 Health endpoints (`/healthz`, `/readyz`) are mounted at the root.
 
+### Auth — `/api/v1/auth`
+| Method | Path     | Description |
+|--------|----------|-------------|
+| POST   | `/login` | Authenticate with email + password, returns a JWT |
+
+Example:
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"secret"}'
+```
+Response:
+```json
+{
+  "status": { "code": 200, "message": "Success" },
+  "data": {
+    "access_token": "eyJhbGci...",
+    "token_type": "Bearer",
+    "expires_in": 86400,
+    "user": { "id": "...", "first_name": "...", "last_name": "...", "email": "..." }
+  }
+}
+```
+Use the token on protected routes via the `Authorization: Bearer <access_token>` header.
+
 ### Users — `/api/v1/users`
-| Method | Path           | Description |
-|--------|----------------|-------------|
-| POST   | `/create`      | Create a user |
-| GET    | `/list`        | List users (paginated) |
-| GET    | `/:id`         | Get a user |
-| PATCH  | `/:id`         | Update a user |
-| DELETE | `/:id`         | Soft-delete a user |
+| Method | Path           | Auth | Description |
+|--------|----------------|------|-------------|
+| POST   | `/create`      | —    | Register a user |
+| GET    | `/list`        | ✓    | List users (paginated) |
+| GET    | `/:id`         | ✓    | Get a user |
+| PATCH  | `/:id`         | ✓    | Update a user |
+| DELETE | `/:id`         | ✓    | Soft-delete a user |
 
 ### Products — `/api/v1/products` (JWT protected)
 | Method | Path           | Description |
@@ -187,6 +212,14 @@ docker compose up --build      # builds the app + starts postgres/redis/redisins
 
 The `main` service runs the `http` command and connects to the bundled Postgres.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on pushes and PRs to `main`:
+- gofmt check, `go vet`, `go build`, and `go test -race -cover`
+- `golangci-lint` (config in `.golangci.yml`)
+
+Run the same checks locally with `make check`.
+
 ## Working with AI agents
 
 This repo includes [`AGENTS.md`](./AGENTS.md) with conventions, and task-specific guides
@@ -201,5 +234,6 @@ under [`.agents/skills/`](./.agents/skills/):
 
 - CORS is configurable via `CORS_ALLOW_ORIGINS` (defaults to reflecting any origin in dev).
   Set an explicit allow-list before production.
-- `/users` routes are unauthenticated in the template; add `AuthMiddleware()` for sensitive ops.
+- Most `/users` and all `/products` routes require a JWT; `POST /users/create` and
+  `POST /auth/login` are public. Adjust per-route auth in `app/routes/`.
 - Change `TOKEN_SECRET_USER` and database credentials before deploying.

@@ -79,7 +79,11 @@ Each feature is a self-contained package under `app/controller/<feature>/`:
 - `ctl.<x>.go` — HTTP handlers: bind input, call service, map errors to responses
 - `sv.<x>.go`  — business logic and Bun database queries
 
-Controllers are wired together in `app/controller/controller.go` (`controller.New()`), and routes are registered in `app/routes/routes.go`.
+Controllers are wired together in `app/controller/controller.go` (`controller.New()`). The
+router builds the controller set **once** in `Router()` and passes it into each route group
+(`Auth(group, ctl)`, `Product(group, ctl)`, `User(group, ctl)`), so route registration
+functions take a `*controller.Controller` argument rather than calling `controller.New()`
+themselves.
 
 ## Conventions (follow these exactly)
 
@@ -114,8 +118,10 @@ if req.SortBy == "" { req.SortBy = "created_at" }
 - Add seed data in `database/seeds/` and register the seeder in `Seeds()` in `database/seeds/0-base.go`.
 
 ## Security notes
-- The `/products` routes are protected by `AuthMiddleware` (Bearer JWT). The `/users` routes are currently open — if you add sensitive user operations, add the middleware.
-- Passwords are hashed with bcrypt (`golang.org/x/crypto/bcrypt`) in the user service. Never store or log plaintext passwords.
+- Most routes require a Bearer JWT via `AuthMiddleware`. Public endpoints are `POST /api/v1/auth/login` and `POST /api/v1/users/create` (registration). All `/products` routes and the rest of `/users` are protected.
+- Login is handled by `app/controller/auth`: it verifies email + bcrypt password and issues a JWT signed with `TOKEN_SECRET_USER`, lifetime `TOKEN_DURATION_USER`. The token carries `user_id`, `email`, `exp`, `iat`. `helper.GetUserByToken` reads `user_id` from the claims.
+- Login returns the same generic "invalid email or password" for unknown email and wrong password, so don't change it to reveal which accounts exist.
+- Passwords are hashed with bcrypt (`golang.org/x/crypto/bcrypt`). Never store or log plaintext passwords.
 - Don't log request bodies that may contain credentials.
 - CORS is driven by `CORS_ALLOW_ORIGINS` (see `corsMiddleware` in `app/routes/routes.go`). `*` reflects any origin; otherwise pass a comma-separated allow-list. Set an explicit list for production.
 

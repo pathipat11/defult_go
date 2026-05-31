@@ -5,8 +5,15 @@ description: Protect routes with JWT auth, read the authenticated user, and add 
 
 # Auth & middleware
 
+## Login & token issuance
+- The login flow lives in `app/controller/auth/` (`POST /api/v1/auth/login`). It looks up the
+  user by email, compares the bcrypt hash, and issues a JWT via `jwt.CreateToken`.
+- Claims issued: `user_id`, `email`, `exp`, `iat`. Token lifetime comes from
+  `TOKEN_DURATION_USER`; the signing secret is `TOKEN_SECRET_USER`.
+- Use the same generic error for unknown email and wrong password to avoid account enumeration.
+
 ## JWT
-- Token helpers: `app/util/jwt/jwt.go` (`VerifyToken`, plus signing helpers).
+- Token helpers: `app/util/jwt/jwt.go` (`VerifyToken`, `CreateToken`).
 - Token config defaults: `TOKEN_SECRET_USER`, `TOKEN_DURATION_USER` in `config/config.go`.
 - Set real secrets via `.env` — never commit production secrets.
 
@@ -33,10 +40,10 @@ open — add `md` to any user route that performs sensitive operations.
 ## Reading the authenticated user
 In a handler, claims set by the middleware are available via the Gin context:
 ```go
-claims, ok := ctx.Get("claims")
+claims, ok := ctx.Get("claims") // claims is jwt.MapClaims
 ```
-There is also `helper.GetUserByToken(ctx)` (see `app/helper/helper.go`) used by the activity
-log middleware.
+Or use `helper.GetUserByToken(ctx)` which returns the `user_id` claim as a string (used by
+the activity-log middleware).
 
 ## Activity-log middleware
 `middleware.NewLogResponse()` captures request/response bodies and writes an `ActivityLog`

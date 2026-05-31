@@ -115,32 +115,35 @@ func New() *Controller {
 ```
 
 ### 6. Routes — `app/routes/<feature>.go`
+Route functions receive the shared `*controller.Controller` (built once in `Router()`),
+so don't call `controller.New()` here.
 ```go
 package routes
 
 import (
 	"app/app/controller"
+	"app/app/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
-func <Feature>(router *gin.RouterGroup) {
-	ctl := controller.New()
+func <Feature>(router *gin.RouterGroup, ctl *controller.Controller) {
+	md := middleware.AuthMiddleware()
 	g := router.Group("")
 	{
-		g.POST("/create", ctl.<Feature>Ctl.Create)
-		g.GET("/list", ctl.<Feature>Ctl.List)
-		g.GET("/:id", ctl.<Feature>Ctl.Get)
-		g.PATCH("/:id", ctl.<Feature>Ctl.Update)
-		g.DELETE("/:id", ctl.<Feature>Ctl.Delete)
+		g.POST("/create", md, ctl.<Feature>Ctl.Create)
+		g.GET("/list", md, ctl.<Feature>Ctl.List)
+		g.GET("/:id", md, ctl.<Feature>Ctl.Get)
+		g.PATCH("/:id", md, ctl.<Feature>Ctl.Update)
+		g.DELETE("/:id", md, ctl.<Feature>Ctl.Delete)
 	}
 }
 ```
-Add an `AuthMiddleware()` to protected routes (see `app/routes/product.go`).
+Drop `md` from any endpoint you want to leave public.
 
-Register the group in `app/routes/routes.go`:
+Register the group in `app/routes/routes.go` (inside `Router`, after `ctl := controller.New()`):
 ```go
-<Feature>(apiV1.Group("/<feature>s"))
+<Feature>(apiV1.Group("/<feature>s"), ctl)
 ```
 
 ### 7. Verify

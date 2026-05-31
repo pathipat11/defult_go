@@ -7,14 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Product(router *gin.RouterGroup) {
-	// Get the *bun.DB instance from config
-	ctl := controller.New() // Pass the *bun.DB to the controller
+func Product(router *gin.RouterGroup, ctl *controller.Controller) {
 	md := middleware.AuthMiddleware()
 	log := middleware.NewLogResponse()
 	product := router.Group("", log)
 	{
-		product.POST("create", ctl.ProductCtl.Create)
+		product.POST("/create", md, ctl.ProductCtl.Create)
 		product.GET("/list", md, ctl.ProductCtl.List)
 		product.GET("/:id", md, ctl.ProductCtl.Get)
 		product.PATCH("/:id", md, ctl.ProductCtl.Update)
