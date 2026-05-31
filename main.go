@@ -24,8 +24,8 @@ func command() error {
 	cmda := &cobra.Command{
 		Use:  "app",
 		Args: cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Usage()
+		Run: func(cmd *cobra.Command, _ []string) {
+			_ = cmd.Usage()
 		},
 	}
 

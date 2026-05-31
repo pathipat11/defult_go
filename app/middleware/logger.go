@@ -68,13 +68,11 @@ func NewLogResponse() gin.HandlerFunc {
 
 		// GET Data Body
 		body, err := io.ReadAll(ctx.Request.Body)
-		if errors.Is(err, io.EOF) {
-
-		} else if err != nil {
+		if err != nil && !errors.Is(err, io.EOF) {
 			response.InternalError(ctx, err.Error())
 			ctx.Abort()
 			return
-		} else {
+		} else if err == nil {
 			ctx.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 			newLog.Request = string(body)
 		}

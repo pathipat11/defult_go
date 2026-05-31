@@ -8,8 +8,8 @@ import (
 )
 
 func Init() {
-	// Load .env file
-	godotenv.Load()
+	// Load .env file (ignore error: .env is optional, defaults cover the rest)
+	_ = godotenv.Load()
 
 	Database()
 	app()

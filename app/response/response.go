@@ -111,16 +111,16 @@ func SuccessWithPaginate(ctx *gin.Context, data any, size, page, count int) {
 			Pagination: gin.H{},
 		})
 		return
-	} else {
-		ctx.JSON(http.StatusOK, ResponsePaginate{
-			Status: StatusResponse{
-				Code:    200,
-				Message: "Success",
-			},
-			Data:       data,
-			Pagination: pagination,
-		})
 	}
+
+	ctx.JSON(http.StatusOK, ResponsePaginate{
+		Status: StatusResponse{
+			Code:    200,
+			Message: "Success",
+		},
+		Data:       data,
+		Pagination: pagination,
+	})
 }
 
 func Forbidden(ctx *gin.Context, message any, payloadCode ...string) {

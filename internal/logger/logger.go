@@ -44,8 +44,8 @@ type Logger struct {
 }
 
 func (log *Logger) clone() *Logger {
-	copy := *log
-	return &copy
+	cloned := *log
+	return &cloned
 }
 
 func Infof(format string, v ...interface{}) {
@@ -72,9 +72,9 @@ func Err(v ...interface{}) {
 
 // WithOptions Add options
 func (log *Logger) WithOptions(opts ...zap.Option) *Logger {
-	copy := log.clone()
-	copy.logger = copy.logger.WithOptions(opts...)
-	return copy
+	cloned := log.clone()
+	cloned.logger = cloned.logger.WithOptions(opts...)
+	return cloned
 }
 
 // Err LogErr by log.Print
@@ -85,7 +85,7 @@ func (log *Logger) Err(v ...interface{}) {
 // Output Priority
 func (log *Logger) output(level LogLevel, msg string, fields ...zap.Field) {
 	logIn := log.WithOptions(zap.AddCallerSkip(1)).logger
-	defer logIn.Sync()
+	defer func() { _ = logIn.Sync() }()
 	if ce := logIn.Check(LogLevelToZapLogLevel(level), msg); ce != nil {
 		ce.Write(fields...)
 	}
