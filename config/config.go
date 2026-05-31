@@ -22,6 +22,7 @@ func app() {
 	viper.SetDefault("APP_NAME", "app")
 	viper.SetDefault("APP_PORT", "8080")
 	viper.SetDefault("APP_ENV", "development")
+	viper.SetDefault("CORS_ALLOW_ORIGINS", "*")
 
 	conf("TOKEN_SECRET_USER", "secret")
 	conf("TOKEN_DURATION_USER", 24*time.Hour)

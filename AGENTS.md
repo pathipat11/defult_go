@@ -42,7 +42,11 @@ Build / verify (always run these after making changes):
 go build ./...
 go vet ./...
 gofmt -l .          # lists files that need formatting; should print nothing
+go test ./...       # run the test suite
 ```
+
+The `Makefile` also wraps these: `make build`, `make vet`, `make fmt-check`, `make test`,
+`make lint` (golangci-lint), and `make check` (fmt-check + vet + test).
 
 > Do not start the server with a blocking foreground command during automated work. Use `go build ./...` and `go vet ./...` to verify instead. If a running server is required, start it as a background process.
 
@@ -113,6 +117,18 @@ if req.SortBy == "" { req.SortBy = "created_at" }
 - The `/products` routes are protected by `AuthMiddleware` (Bearer JWT). The `/users` routes are currently open — if you add sensitive user operations, add the middleware.
 - Passwords are hashed with bcrypt (`golang.org/x/crypto/bcrypt`) in the user service. Never store or log plaintext passwords.
 - Don't log request bodies that may contain credentials.
+- CORS is driven by `CORS_ALLOW_ORIGINS` (see `corsMiddleware` in `app/routes/routes.go`). `*` reflects any origin; otherwise pass a comma-separated allow-list. Set an explicit list for production.
+
+## HTTP server
+- The `http` command (`internal/cmd/httpCmd.go`) runs an `http.Server` with graceful shutdown on `SIGINT`/`SIGTERM` and a 10s drain timeout. It listens on `APP_PORT` and switches Gin to release mode when `APP_ENV=production`.
+- Health endpoints live at the root: `/healthz` (liveness) and `/readyz` (pings the DB).
+
+## Response helpers
+- `response.BadRequest/Unauthorized/Forbidden/NotFound/InternalError` set the matching HTTP status and a JSON `{status:{code,message}}` envelope. Passing `nil` as the message is safe — it falls back to a default. Don't reintroduce a naked `message.(string)` assertion (it panics on nil).
+
+## Testing
+- Tests live alongside code as `_test.go` files. Pure-logic units (response helpers, JWT, helpers) are covered. DB-dependent service tests would need a test database (not yet wired up).
+- Run `go test ./...` (or `make test`). Add tests when fixing bugs or adding features.
 
 ## Gotchas
 - The module path is `app`, so a package at `app/controller/user` imports as `app/app/controller/user`.
@@ -124,6 +140,7 @@ A change is complete when:
 1. `go build ./...` succeeds.
 2. `go vet ./...` is clean.
 3. `gofmt -l .` prints nothing.
-4. New endpoints are registered in `app/routes/` and wired in `app/controller/controller.go`.
-5. New models are registered in `database/migrations/Models.go`.
-6. New config keys have defaults in `config/` and are documented in `.env.example`.
+4. `go test ./...` passes.
+5. New endpoints are registered in `app/routes/` and wired in `app/controller/controller.go`.
+6. New models are registered in `database/migrations/Models.go`.
+7. New config keys have defaults in `config/` and are documented in `.env.example`.

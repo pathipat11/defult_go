@@ -1,7 +1,8 @@
-// hrm-bio/app/response/response.go
+// app/response/response.go
 package response
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,25 @@ type StatusResponse struct {
 type Response struct {
 	Status StatusResponse `json:"status"`
 	Data   any            `json:"data,omitempty"`
+}
+
+// toMessage safely converts an arbitrary message value into a string,
+// falling back to a default when nil or of an unexpected type. This avoids
+// the panic that a naked message.(string) assertion would cause on nil.
+func toMessage(message any, fallback string) string {
+	switch v := message.(type) {
+	case nil:
+		return fallback
+	case string:
+		if v == "" {
+			return fallback
+		}
+		return v
+	case error:
+		return v.Error()
+	default:
+		return fmt.Sprint(v)
+	}
 }
 
 type ResponsePaginate struct {
@@ -41,14 +61,14 @@ func Success(ctx *gin.Context, data any) {
 func InternalError(ctx *gin.Context, message any, payloadCode ...string) {
 	ctx.JSON(http.StatusInternalServerError, StatusResponse{
 		Code:    500,
-		Message: message.(string), // Set the message directly here
+		Message: toMessage(message, "Internal Server Error"),
 	})
 }
 
 func NotFound(ctx *gin.Context, message any, payloadCode ...string) {
 	ctx.JSON(http.StatusNotFound, StatusResponse{
 		Code:    404,
-		Message: message.(string), // Set the message directly here
+		Message: toMessage(message, "Not Found"),
 	})
 }
 
@@ -56,29 +76,29 @@ func NotFound(ctx *gin.Context, message any, payloadCode ...string) {
 func BadRequest(ctx *gin.Context, message any) {
 	ctx.JSON(http.StatusBadRequest, StatusResponse{
 		Code:    400,
-		Message: message.(string), // Set the message directly here
+		Message: toMessage(message, "Bad Request"),
 	})
 }
 
 func Unauthorized(ctx *gin.Context, message any, payloadCode ...string) {
-	ctx.JSON(http.StatusInternalServerError, StatusResponse{
+	ctx.JSON(http.StatusUnauthorized, StatusResponse{
 		Code:    401,
-		Message: message.(string), // Set the message directly here
+		Message: toMessage(message, "Unauthorized"),
 	})
 }
 
 type Pagination struct {
-	Page        int `json:"page"`
-	Size        int `json:"size"`
-	Total       int `json:"total"`
+	Page  int `json:"page"`
+	Size  int `json:"size"`
+	Total int `json:"total"`
 }
 
 func SuccessWithPaginate(ctx *gin.Context, data any, size, page, count int) {
 
 	pagination := Pagination{
-		Page:        page,
-		Size:        size,
-		Total:       count,
+		Page:  page,
+		Size:  size,
+		Total: count,
 	}
 
 	if pagination.Total == 0 {
@@ -104,8 +124,8 @@ func SuccessWithPaginate(ctx *gin.Context, data any, size, page, count int) {
 }
 
 func Forbidden(ctx *gin.Context, message any, payloadCode ...string) {
-	ctx.JSON(http.StatusInternalServerError, StatusResponse{
+	ctx.JSON(http.StatusForbidden, StatusResponse{
 		Code:    403,
-		Message: message.(string), // Set the message directly here
+		Message: toMessage(message, "Forbidden"),
 	})
 }

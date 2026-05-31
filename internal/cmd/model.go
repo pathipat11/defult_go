@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"context"
 	"app/database/migrations"
 	"app/database/seeds"
 	"app/internal/logger"
+	"context"
 
 	"github.com/uptrace/bun"
 )

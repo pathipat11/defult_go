@@ -1,20 +1,22 @@
-version: "3.9"
-
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:16-alpine
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready"]
+      test: ["CMD-SHELL", "pg_isready -U root"]
       interval: 5s
       timeout: 5s
       retries: 5
+
   redis:
-    image: redis:latest
+    image: redis:7-alpine
     ports:
       - "6379:6379"
 
@@ -30,13 +32,21 @@ services:
       - "8080:8080"
     command: http
     environment:
-      - DB_HOST=host.docker.internal
+      - APP_NAME=app
+      - APP_PORT=8080
+      - APP_ENV=production
+      - CORS_ALLOW_ORIGINS=*
+      - DB_HOST=postgres
       - DB_PORT=5432
       - DB_DATABASE=postgres
       - DB_USER=root
       - DB_PASSWORD=secret
       - DB_DSN=
       - DB_SSLMODE=disable
+      - TOKEN_SECRET_USER=change-me
     depends_on:
       postgres:
         condition: service_healthy
+
+volumes:
+  pgdata:

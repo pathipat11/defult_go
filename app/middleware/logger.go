@@ -127,10 +127,10 @@ func NewLogResponse() gin.HandlerFunc {
 	}
 }
 
+// GetHeader reads an HTTP request header by name, returning a sentinel when absent.
 func GetHeader(ctx *gin.Context, key string) string {
-	val, ok := ctx.Get(LocalIP)
-	if !ok {
-		return `not-found`
+	if val := ctx.GetHeader(key); val != "" {
+		return val
 	}
-	return val.(string)
+	return `not-found`
 }

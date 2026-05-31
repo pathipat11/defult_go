@@ -78,10 +78,14 @@ make migrate-seed
 make api          # equivalent to: go run . http
 ```
 
-The server listens on `APP_PORT` (default `8080`). Health check:
+The server listens on `APP_PORT` (default `8080`) and shuts down gracefully on
+`SIGINT`/`SIGTERM`, draining in-flight requests for up to 10 seconds.
+
+Health endpoints:
 
 ```bash
-curl http://localhost:8080/healthz
+curl http://localhost:8080/healthz   # liveness: process is up
+curl http://localhost:8080/readyz    # readiness: pings the database
 ```
 
 ## Configuration
@@ -93,7 +97,8 @@ defined in `config/`. Key variables:
 |----------------------|----------------|-------------|
 | `APP_NAME`           | `app`          | App name (used for tracing) |
 | `APP_PORT`           | `8080`         | HTTP listen port |
-| `APP_ENV`            | `development`  | Environment name |
+| `APP_ENV`            | `development`  | Environment name (`production` enables Gin release mode) |
+| `CORS_ALLOW_ORIGINS` | `*`            | `*` reflects any origin, or a comma-separated allow-list |
 | `DB_HOST`            | `127.0.0.1`    | PostgreSQL host |
 | `DB_PORT`            | `5432`         | PostgreSQL port |
 | `DB_DATABASE`        | `postgres`     | Database name |
@@ -105,6 +110,7 @@ defined in `config/`. Key variables:
 | `TOKEN_SECRET_USER`  | `secret`       | JWT signing secret (change in production) |
 | `TOKEN_DURATION_USER`| `24h`          | JWT lifetime |
 | `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_USERNAME` / `EMAIL_PASSWORD` | — | SMTP settings |
+| `REDIRECT_URL` / `CLIENT_ID` / `CLIENT_SECRET` | — | Google OAuth settings |
 | `DEBUG`              | `false`        | Enables verbose Bun query logging |
 
 ## CLI commands
@@ -123,7 +129,8 @@ The `Makefile` wraps these as `make api`, `make migrate-up`, `make migrate-down`
 
 ## API
 
-All routes are mounted under `/api/v1` (see `app/routes/routes.go`).
+All feature routes are mounted under `/api/v1` (see `app/routes/routes.go`).
+Health endpoints (`/healthz`, `/readyz`) are mounted at the root.
 
 ### Users — `/api/v1/users`
 | Method | Path           | Description |
@@ -163,9 +170,14 @@ Protected endpoints require an `Authorization: Bearer <token>` header.
 go build ./...   # compile everything
 go vet ./...     # static analysis
 gofmt -l .       # formatting check (should print nothing)
+go test ./...    # run tests
 ```
 
-Verify all three are clean before committing.
+The `Makefile` also provides: `make build`, `make test`, `make test-cover`, `make vet`,
+`make fmt`, `make fmt-check`, `make lint` (requires
+[golangci-lint](https://golangci-lint.run/)), and `make check` (fmt-check + vet + test).
+
+Verify the build, vet, and tests are clean before committing.
 
 ## Docker
 
@@ -187,6 +199,7 @@ under [`.agents/skills/`](./.agents/skills/):
 
 ## Notes & TODO
 
-- CORS is fully open by default — restrict allowed origins before production.
+- CORS is configurable via `CORS_ALLOW_ORIGINS` (defaults to reflecting any origin in dev).
+  Set an explicit allow-list before production.
 - `/users` routes are unauthenticated in the template; add `AuthMiddleware()` for sensitive ops.
 - Change `TOKEN_SECRET_USER` and database credentials before deploying.
