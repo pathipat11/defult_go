@@ -19,6 +19,7 @@ func Init() {
 }
 
 func app() {
+	viper.SetDefault("APP_NAME", "app")
 	viper.SetDefault("APP_PORT", "8080")
 	viper.SetDefault("APP_ENV", "development")
 

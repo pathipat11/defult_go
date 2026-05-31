@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // HTTP is serve http ot https
@@ -15,7 +16,7 @@ func HttpCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			r := gin.Default()
 			routes.Router(r)
-			r.Run(":8080") // Start server on port 8080
+			r.Run(":" + viper.GetString("APP_PORT")) // Start server on the configured port
 		},
 	}
 }

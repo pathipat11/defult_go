@@ -144,7 +144,7 @@ func (ctl *Controller) Create(ctx *gin.Context) {
 	body := request.CreateUser{}
 
 	if err := ctx.Bind(&body); err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.BadRequest(ctx, err.Error())
 		return
 	}
@@ -155,7 +155,7 @@ func (ctl *Controller) Create(ctx *gin.Context) {
 		if mserr {
 			ms = err.Error()
 		}
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.InternalError(ctx, ms)
 		return
 	}
@@ -166,14 +166,14 @@ func (ctl *Controller) Create(ctx *gin.Context) {
 func (ctl *Controller) Update(ctx *gin.Context) {
 	ID := request.GetByIDUser{}
 	if err := ctx.BindUri(&ID); err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.BadRequest(ctx, err.Error())
 		return
 	}
 
 	body := request.UpdateUser{}
 	if err := ctx.Bind(&body); err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.BadRequest(ctx, err.Error())
 		return
 	}
@@ -184,7 +184,7 @@ func (ctl *Controller) Update(ctx *gin.Context) {
 		if mserr {
 			ms = err.Error()
 		}
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.InternalError(ctx, ms)
 		return
 	}
@@ -195,7 +195,7 @@ func (ctl *Controller) Update(ctx *gin.Context) {
 func (ctl *Controller) List(ctx *gin.Context) {
 	req := request.ListUser{}
 	if err := ctx.Bind(&req); err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.BadRequest(ctx, err.Error())
 		return
 	}
@@ -204,8 +204,8 @@ func (ctl *Controller) List(ctx *gin.Context) {
 		req.Page = 1
 	}
 
-	if req.Page == 0 {
-		req.Page = 10
+	if req.Size == 0 {
+		req.Size = 10
 	}
 
 	if req.OrderBy == "" {
@@ -218,7 +218,7 @@ func (ctl *Controller) List(ctx *gin.Context) {
 
 	data, total, err := ctl.Service.List(ctx, req)
 	if err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.InternalError(ctx, err.Error())
 		return
 	}
@@ -228,14 +228,14 @@ func (ctl *Controller) List(ctx *gin.Context) {
 func (ctl *Controller) Get(ctx *gin.Context) {
 	ID := request.GetByIDUser{}
 	if err := ctx.BindUri(&ID); err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.BadRequest(ctx, err.Error())
 		return
 	}
 
 	data, err := ctl.Service.Get(ctx, ID)
 	if err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.InternalError(ctx, err.Error())
 		return
 	}
@@ -245,14 +245,14 @@ func (ctl *Controller) Get(ctx *gin.Context) {
 func (ctl *Controller) Delete(ctx *gin.Context) {
 	ID := request.GetByIDUser{}
 	if err := ctx.BindUri(&ID); err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.BadRequest(ctx, err.Error())
 		return
 	}
 
 	err := ctl.Service.Delete(ctx, ID)
 	if err != nil {
-		logger.Errf(err.Error())
+		logger.Err(err.Error())
 		response.InternalError(ctx, err.Error())
 		return
 	}

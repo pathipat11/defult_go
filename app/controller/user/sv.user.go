@@ -139,7 +139,7 @@ func (s *Service) Update(ctx context.Context, req request.UpdateUser, id request
 	}
 
 	if !ex {
-		return nil, false, err
+		return nil, true, errors.New("user not found")
 	}
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(req.Password), 14)
@@ -184,9 +184,8 @@ func (s *Service) List(ctx context.Context, req request.ListUser) ([]response.Li
 		Where("deleted_at IS NULL")
 
 	if req.Search != "" {
-		search := fmt.Sprintf("%" + strings.ToLower(req.Search) + "%")
+		search := "%" + strings.ToLower(req.Search) + "%"
 		if req.SearchBy != "" {
-			search := strings.ToLower(req.Search)
 			query.Where(fmt.Sprintf("LOWER(u.%s) LIKE ?", req.SearchBy), search)
 		} else {
 			query.Where("LOWER(first_name) LIKE ?", search)
